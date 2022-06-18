@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const apis = {
-  development: "A URL DO SEU SERVIDOR EXPRESS LOCAL AQUI",
+  development: "http://localhost:3030",
   production: "A URL DO SEU SERVIDOR DEPLOYADO NO HEROKU AQUI",
 };
 
