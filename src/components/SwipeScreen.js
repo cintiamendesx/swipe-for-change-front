@@ -3,7 +3,7 @@ import api from "../apis/api";
 import TinderCard from 'react-tinder-card'
 import { AuthContext } from '../contexts/authContext';
 import {Button , Form , Modal } from 'react-bootstrap';
-
+import MessageBar from './MessageBar';
 
 function SwipeScreen () {
     const [visibleUsers, setVisibleUsers ] = useState ([]);
@@ -13,9 +13,11 @@ function SwipeScreen () {
     let loggedUserSkills = useContext (AuthContext).loggedInUser.user.skills;
 //------modal
     const [show, setShow] = useState(false);
+    const [showModal, setShowModal] = useState(false);
     const handleClose = () => setShow(false);
 //------message
-    const [ message, setMessage ] = useState ([]);
+    const [ message, setMessage ] = useState ({});
+    const [ matchId, setMatchId ] = useState ();
 
 
   //----me mostra os usuários no banco--------------------------
@@ -31,30 +33,53 @@ function SwipeScreen () {
 
 useEffect(() => {
     renderUsers();
+
     
 }, [])
 
- //-----loggedin
+
+//------exibe modal
+useEffect(() => {
+  if (match === true) {
+    setShow(true)
+  }
+  
+}, [match])
+
 
  //------------------
- async function sendMessage() {
+
+ 
+const handleSubmit = async (event) => {
+  event.preventDefault();
+  setShow(false);
+
   try {
-      const initialmessage = await api.post("/message")
-      setMessage(initialmessage.data)
-  
+      const initialmessage = await api.post("/message", {recipientId: matchId, text: message} )
+      setMessage({...initialmessage.data})
+      console.log(initialmessage.data);
+     
+
   }catch (err) {
       console.log(err)
   }
-};
+}
 
-useEffect(() => {
-  sendMessage();
-  
-}, [])
- //-----------------
+  //-----------------
 
 
-  const swiped = (direction, nameToDelete, skills) => {  
+
+
+
+  useEffect(() => {
+    if (details === true) {
+      setShowModal(true)
+    }
+  }, [details])
+
+
+
+  const swiped = (direction, nameToDelete, skills, id) => {  
     console.log(nameToDelete);
 
     setMatch(false)
@@ -64,8 +89,10 @@ useEffect(() => {
 
     if (direction === "right" && loggedUserSkills === skills) {
       setMatch(true)
-      setShow(true)
+      setMatchId(id)
+
     }
+
 
 if (direction === "up") {
   setDetails(true)
@@ -91,52 +118,62 @@ if (direction === "up") {
       <div className='cardContainer'>
         {visibleUsers.map((character) =>
           <>
-          <TinderCard className='swipe' key={character.name} onSwipe={(dir) => swiped(dir, character.name, character.skills)} onCardLeftScreen={() => outOfFrame(character.name)}>
+          <TinderCard className='swipe' key={character.name} onSwipe={(dir) => swiped(dir, character.name, character.skills, character._id)} onCardLeftScreen={() => outOfFrame(character.name)}>
             <div style={{ backgroundImage: 'url(' + character.avatar + ')' }} className='card'>
               <h3>{character.name}</h3> <br />
               <h2>{character.skills}</h2>
-              {match ?               <>
+              {match ?   <h1>It's a match!</h1>  : null}
+            </div>
+            {details ? <Modal show={showModal} onHide={handleClose}>
+          <Modal.Title>{character.name}</Modal.Title>
+        <Modal.Body>
+         <img src={character.avatar} className='card' alt="avatar pic"></img>
+          <h2>{character.skills}</h2>
+          <h2>{character.adress}</h2>
+          
+        </Modal.Body>
 
-                <Modal show={show} onHide={handleClose}>
+      </Modal>
+
+            : null}
+          </TinderCard>
+          </>
+          
+        )}
+      </div>
+      {lastDirection ? <h2 className='infoText'>You swiped {lastDirection}</h2> : <h2 className='infoText'>You swiped {lastDirection}</h2>}
+
+      <Modal show={show} onHide={handleClose}>
         <Modal.Header closeButton>
           <Modal.Title>It's a match!</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          <Form>
+          <Form  onSubmit={handleSubmit}>
             <Form.Group
               className="mb-3"
               controlId="exampleForm.ControlTextarea1"
             >
-              <Form.Label>You and <b>{character.name}</b> are perfect for each other, send a message!!</Form.Label>
-              <Form.Control as="textarea" autoFocus rows={3} />
+              <Form.Label> send a initial message</Form.Label>
+              <Form.Control as="textarea" autoFocus rows={3} value={message}
+          onChange={(e) => setMessage(e.target.value)} /> 
             </Form.Group>
           </Form>
         </Modal.Body>
+        
         <Modal.Footer>
           <Button variant="secondary" onClick={handleClose}>
             Close
           </Button>
-          <Button variant="primary" onClick={message}>
+          <Button button type="submit" onClick={handleSubmit}>
             Send
           </Button>
         </Modal.Footer>
       </Modal>
-
-      </> : null}
-            </div>
-            {details ? <h1>wait</h1>
-
-            : null}
-          </TinderCard>
-
-          </>
-
-          
-        )}
-      </div>
-      {lastDirection ? <h2 className='infoText'>You swiped {lastDirection}</h2> : <h2 className='infoText' />}
+     
+      <MessageBar test={message} />
 
     </div>
+
   )
 }
 
