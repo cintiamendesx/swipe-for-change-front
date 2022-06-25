@@ -1,4 +1,3 @@
-![logo_ironhack_blue 7]([https://user-images.githubusercontent.com/v1656145489/axds_ctjkv5.png.png])
 
 # Swipe For Change
 
